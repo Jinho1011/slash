@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { Serializable, useStorageState } from './useStorageState';
+import { Constrained, Serializable, useStorageState } from './useStorageState';
 
 describe('useLocalStorageState는', () => {
   it('초기 상태를 스토리지에서 가져온다.', () => {
@@ -140,7 +140,7 @@ function createMockStorage() {
   };
 }
 
-function createFixture<T extends Serializable>({ defaultValue }: { defaultValue?: T } = {}) {
+function createFixture<T extends Serializable>({ defaultValue }: { defaultValue?: Constrained<T> } = {}) {
   const key = '@@test-key';
   const storage = createMockStorage();
   const render = () => renderHook(() => useStorageState<T>(key, { storage, defaultValue }));

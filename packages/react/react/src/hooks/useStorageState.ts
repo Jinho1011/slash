@@ -3,13 +3,26 @@ import { safeLocalStorage, Storage } from '@toss/storage';
 import { SetStateAction, useCallback, useState } from 'react';
 
 export type Serializable = string | number | boolean | unknown[] | Record<string, unknown>;
+
+export type Constrained<T> = T extends string
+  ? string
+  : T extends number
+  ? number
+  : T extends boolean
+  ? boolean
+  : T extends unknown[]
+  ? unknown[]
+  : T extends Record<string, unknown>
+  ? Record<string, unknown>
+  : T;
+
 interface StorageStateOptions<T> {
   storage?: Storage;
-  defaultValue?: T;
+  defaultValue?: Constrained<T>;
 }
 
 interface StorageStateOptionsWithDefaultValue<T> extends StorageStateOptions<T> {
-  defaultValue: T;
+  defaultValue: Constrained<T>;
 }
 
 /**
@@ -18,19 +31,19 @@ interface StorageStateOptionsWithDefaultValue<T> extends StorageStateOptions<T> 
  */
 export function useStorageState<T extends Serializable>(
   key: string
-): readonly [T | undefined, (value: SetStateAction<T | undefined>) => void, () => void];
+): readonly [Constrained<T> | undefined, (value: SetStateAction<Constrained<T> | undefined>) => void, () => void];
 export function useStorageState<T extends Serializable>(
   key: string,
   { storage, defaultValue }: StorageStateOptionsWithDefaultValue<T>
-): readonly [T, (value: SetStateAction<T>) => void, () => void];
+): readonly [Constrained<T>, (value: SetStateAction<Constrained<T>>) => void, () => void];
 export function useStorageState<T extends Serializable>(
   key: string,
   { storage, defaultValue }: StorageStateOptions<T>
-): readonly [T | undefined, (value: SetStateAction<T | undefined>) => void, () => void];
+): readonly [Constrained<T> | undefined, (value: SetStateAction<Constrained<T> | undefined>) => void, () => void];
 export function useStorageState<T extends Serializable>(
   key: string,
   { storage = safeLocalStorage, defaultValue }: StorageStateOptions<T> = {}
-): readonly [T | undefined, (value: SetStateAction<T | undefined>) => void, () => void] {
+): readonly [Constrained<T> | undefined, (value: SetStateAction<Constrained<T> | undefined>) => void, () => void] {
   const getValue = useCallback(<T>() => {
     const data = storage.get(key);
 
@@ -52,12 +65,12 @@ export function useStorageState<T extends Serializable>(
     }
   }, [defaultValue, key, storage]);
 
-  const [state, setState] = useState<T | undefined>(getValue);
+  const [state, setState] = useState<Constrained<T> | undefined>(getValue);
 
   const set = useCallback(
-    (value: SetStateAction<T | undefined>) => {
+    (value: SetStateAction<Constrained<T> | undefined>) => {
       setState(curr => {
-        const nextValue = typeof value === 'function' ? value(curr) : value;
+        const nextValue = value instanceof Function ? value(curr) : value;
 
         if (nextValue == null) {
           storage.remove(key);
